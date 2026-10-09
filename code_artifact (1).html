@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>บันทึกข้อมูลการสนับสนุน สส.อ๋อง</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Prompt', sans-serif; }
+    /* Custom scrollbar for data tables */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-blue-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+          <i class="fa-solid fa-hand-holding-heart text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold leading-tight text-white flex items-center gap-2">
+            บันทึกข้อมูลการสนับสนุน สส.อ๋อง
+            <span id="statusBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1.5"></span>
+              กำลังเชื่อมต่อ
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400">ระบบคลาวด์ออนไลน์เปิดร่วมกรอกและสรุปสถิติแบบเรียลไทม์</p>
+        </div>
+      </div>
+
+      <!-- Header Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="btnQrCode" type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-700 hover:bg-brand-600 text-white shadow-md transition">
+          <i class="fa-solid fa-qrcode mr-1.5"></i> QR Code ให้ทีมงาน
+        </button>
+        <button id="btnPrint" type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white shadow-md transition">
+          <i class="fa-solid fa-print mr-1.5"></i> พิมพ์รายงาน
+        </button>
+        <button id="btnShare" type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <i class="fa-solid fa-share-nodes mr-1.5 text-brand-400"></i> คัดลอกลิงก์
+        </button>
+        <button id="btnReload" type="button" title="ดึงข้อมูลใหม่" class="p-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Global Alert / Toast Box -->
+    <div id="toastBox" class="hidden p-4 rounded-xl text-sm font-medium border shadow-lg transition-all duration-300"></div>
+
+    <!-- Filter Bar & Summary Stat Cards -->
+    <section class="space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800">
+        <div class="flex items-center gap-2 text-sm text-slate-300 font-medium">
+          <i class="fa-solid fa-filter text-brand-400"></i> ตัวกรองข้อมูล:
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
+          <select id="filterDistrict" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none flex-1 min-w-[130px]">
+            <option value="">ทุกอำเภอ</option>
+          </select>
+          <select id="filterMonth" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none flex-1 min-w-[130px]">
+            <option value="">ทุกเดือน</option>
+          </select>
+          <button id="btnResetFilter" type="button" class="text-xs text-slate-400 hover:text-white px-2 py-1 transition">
+            <i class="fa-solid fa-xmark mr-1"></i> ล้างตัวกรอง
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Stat Cards Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden group">
+          <div class="absolute -right-2 -bottom-2 opacity-10 text-brand-400 group-hover:scale-110 transition duration-300">
+            <i class="fa-solid fa-list-check text-6xl"></i>
+          </div>
+          <span class="text-xs font-medium text-slate-400">รายการทั้งหมด</span>
+          <div class="mt-2 flex items-baseline">
+            <span id="kpiTotalCount" class="text-2xl sm:text-3xl font-extrabold text-brand-400">0</span>
+            <span class="ml-1.5 text-xs text-slate-500">ครั้ง</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden group">
+          <div class="absolute -right-2 -bottom-2 opacity-10 text-emerald-400 group-hover:scale-110 transition duration-300">
+            <i class="fa-solid fa-baht-sign text-6xl"></i>
+          </div>
+          <span class="text-xs font-medium text-slate-400">จำนวนเงินรวม</span>
+          <div class="mt-2 flex items-baseline">
+            <span id="kpiTotalAmount" class="text-2xl sm:text-3xl font-extrabold text-emerald-400">0</span>
+            <span class="ml-1.5 text-xs text-slate-500">บาท</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden group">
+          <div class="absolute -right-2 -bottom-2 opacity-10 text-purple-400 group-hover:scale-110 transition duration-300">
+            <i class="fa-solid fa-city text-6xl"></i>
+          </div>
+          <span class="text-xs font-medium text-slate-400">อำเภอ</span>
+          <div class="mt-2 flex items-baseline">
+            <span id="kpiDistrictCount" class="text-2xl sm:text-3xl font-extrabold text-purple-400">0</span>
+            <span class="ml-1.5 text-xs text-slate-500">แห่ง</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden group">
+          <div class="absolute -right-2 -bottom-2 opacity-10 text-amber-400 group-hover:scale-110 transition duration-300">
+            <i class="fa-solid fa-tree-city text-6xl"></i>
+          </div>
+          <span class="text-xs font-medium text-slate-400">ตำบล</span>
+          <div class="mt-2 flex items-baseline">
+            <span id="kpiSubdistrictCount" class="text-2xl sm:text-3xl font-extrabold text-amber-400">0</span>
+            <span class="ml-1.5 text-xs text-slate-500">แห่ง</span>
+          </div>
+        </div>
+
+        <div class="col-span-2 md:col-span-1 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden group">
+          <div class="absolute -right-2 -bottom-2 opacity-10 text-sky-400 group-hover:scale-110 transition duration-300">
+            <i class="fa-solid fa-house-chimney text-6xl"></i>
+          </div>
+          <span class="text-xs font-medium text-slate-400">หมู่บ้าน</span>
+          <div class="mt-2 flex items-baseline">
+            <span id="kpiVillageCount" class="text-2xl sm:text-3xl font-extrabold text-sky-400">0</span>
+            <span class="ml-1.5 text-xs text-slate-500">แห่ง</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form Card: Add New Record -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl relative">
+      <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-800">
+        <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-circle-plus text-brand-500"></i> บันทึกการสนับสนุนใหม่
+        </h2>
+        <span class="text-xs text-slate-400 font-normal">* กรอกข้อมูลแล้วระบบจะซิงค์สถิติทันที</span>
+      </div>
+
+      <form id="recordForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Date -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">วันที่ลงสนับสนุน <span class="text-rose-400">*</span></label>
+          <input type="date" id="formDate" required class="w-[#100%] bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none w-full">
+        </div>
+
+        <!-- Recorder / Team -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">ทีมงาน / ผู้บันทึก <span class="text-rose-400">*</span></label>
+          <input id="formRecorder" list="listRecorder" required placeholder="เช่น เลขาแบงค์, สจ. หรือชื่อผู้บันทึก" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none w-full">
+        </div>
+
+        <!-- District -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">อำเภอ <span class="text-rose-400">*</span></label>
+          <input id="formDistrict" list="listDistrict" required placeholder="เช่น เมือง, เชียงคาน" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none w-full">
+        </div>
+
+        <!-- Subdistrict -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">ตำบล <span class="text-rose-400">*</span></label>
+          <input id="formSubdistrict" list="listSubdistrict" required placeholder="เช่น กุดป่อง, ทรายขาว" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none w-full">
+        </div>
+
+        <!-- Village -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">หมู่บ้าน / ชุมชน <span class="text-rose-400">*</span></label>
+          <input id="formVillage" list="listVillage" required placeholder="เช่น หมู่ 1 บ้านบุ่งศ้อ" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none w-full">
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">จำนวนเงิน (บาท)</label>
+          <input type="number" id="formAmount" min="0" step="any" placeholder="0.00" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none w-full">
+        </div>
+
+        <!-- Support Categories Checklist -->
+        <div class="sm:col-span-2 lg:col-span-3">
+          <label class="block text-xs font-medium text-slate-300 mb-2">รายการสนับสนุน (เลือกได้หลายอย่าง)</label>
+          <div id="categoryCheckboxes" class="flex flex-wrap gap-2 p-3 bg-slate-950/60 rounded-2xl border border-slate-800">
+            <!-- Dynamic Category Pills injected here -->
+          </div>
+        </div>
+
+        <!-- Details / Note -->
+        <div class="sm:col-span-2 lg:col-span-3">
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">รายละเอียดเพิ่มเติม / หมายเหตุ</label>
+          <input id="formNote" placeholder="รายละเอียด เช่น มอบถ้วยรางวัลงานแข่งบอลประจำปี, สนับสนุนน้ำดื่ม 20 โหล" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none w-full">
+        </div>
+
+        <!-- Submit Button -->
+        <div class="sm:col-span-2 lg:col-span-3 flex items-center justify-end gap-3 pt-2">
+          <span id="formMsg" class="text-xs font-medium text-emerald-400 transition-all duration-200"></span>
+          <button id="btnSubmit" type="submit" class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white font-medium text-xs shadow-lg shadow-brand-600/30 transition duration-150">
+            <i class="fa-solid fa-floppy-disk mr-2"></i> บันทึกข้อมูล
+          </button>
+        </div>
+      </form>
+
+      <!-- Datalists for Auto Suggestions -->
+      <datalist id="listRecorder"></datalist>
+      <datalist id="listDistrict"></datalist>
+      <datalist id="listSubdistrict"></datalist>
+      <datalist id="listVillage"></datalist>
+    </section>
+
+    <!-- Analytics Graphs & Charts Section -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <!-- By Support Category -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-brand-400"></i> สถิติตามรายการสนับสนุน (ครั้ง)
+        </h3>
+        <div id="chartCategory" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- By District -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-map-location-dot text-purple-400"></i> สถิติตามอำเภอ
+        </h3>
+        <div id="chartDistrict" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- By Subdistrict Top 10 -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-chart-bar text-amber-400"></i> สถิติตามตำบล (10 อันดับแรก)
+        </h3>
+        <div id="chartSubdistrict" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- By Village Top 10 -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-ranking-star text-sky-400"></i> สถิติตามหมู่บ้าน (10 อันดับแรก)
+        </h3>
+        <div id="chartVillage" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- By Recorder / Team -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-users text-emerald-400"></i> สถิติตามทีมงาน/ผู้บันทึก
+        </h3>
+        <div id="chartRecorder" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- Monthly Trend -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-calendar-days text-rose-400"></i> สถิติรายเดือน
+        </h3>
+        <div id="chartMonth" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+      </div>
+    </section>
+
+    <!-- Village Explorer Table -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-magnifying-glass-location text-brand-400"></i> ค้นหาสถิติรายหมู่บ้าน
+          </h2>
+          <p class="text-xs text-slate-400">ตรวจสอบจำนวนการลงพื้นที่และรายการสนับสนุนย้อนหลังของแต่ละหมู่บ้าน</p>
+        </div>
+        <div class="w-full sm:w-72">
+          <input id="searchVillageQuery" placeholder="พิมพ์ชื่อหมู่บ้าน ตำบล หรืออำเภอ..." autocomplete="off" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none w-full">
+        </div>
+      </div>
+
+      <div id="villageSearchMeta" class="text-xs text-slate-400 mb-3"></div>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-800">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+            <tr>
+              <th class="p-3">หมู่บ้าน</th>
+              <th class="p-3">ตำบล / อำเภอ</th>
+              <th class="p-3 text-center">จำนวนครั้ง</th>
+              <th class="p-3">ล่าสุดเมื่อ</th>
+              <th class="p-3">รายการสนับสนุน</th>
+              <th class="p-3 text-right">ยอดเงิน (บาท)</th>
+            </tr>
+          </thead>
+          <tbody id="tableVillageBody" class="divide-y divide-slate-800/60 bg-slate-900/50"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Recent Records Table Section -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-brand-400"></i> รายการบันทึกล่าสุด
+          </h2>
+          <p class="text-xs text-slate-400">ตารางแสดงรายการสนับสนุนทั้งหมดตามตัวกรองปัจจุบัน</p>
+        </div>
+        <span id="recordCountMeta" class="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700"></span>
+      </div>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-800">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+            <tr>
+              <th class="p-3">วันที่</th>
+              <th class="p-3">ผู้บันทึก</th>
+              <th class="p-3">อำเภอ / ตำบล</th>
+              <th class="p-3">หมู่บ้าน</th>
+              <th class="p-3">รายการ</th>
+              <th class="p-3 text-right">จำนวนเงิน</th>
+              <th class="p-3">รายละเอียด</th>
+              <th class="p-3 text-center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="tableRecordsBody" class="divide-y divide-slate-800/60 bg-slate-900/50"></tbody>
+        </table>
+      </div>
+      <div id="moreRecordsMsg" class="text-xs text-center text-slate-500 mt-3"></div>
+    </section>
+
+    <!-- Import / Export Tool Section -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
+      <h2 class="text-base font-bold text-white flex items-center gap-2">
+        <i class="fa-solid fa-file-csv text-emerald-400"></i> นำเข้า / ส่งออกข้อมูล (CSV)
+      </h2>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        สามารถนำเข้าไฟล์ CSV จาก Google ฟอร์ม หรือนำเข้าชุดข้อมูลย้อนหลังได้ โดยใช้หัวคอลัมน์มาตรฐาน: 
+        <code class="text-brand-300 bg-slate-800 px-1.5 py-0.5 rounded">วันที่, ทีมงาน/ผู้บันทึก, อำเภอ, ตำบล, หมู่บ้าน, รายการสนับสนุน, จำนวนเงิน (บาท), รายละเอียด</code>
+      </p>
+
+      <div class="flex flex-wrap items-center gap-3 pt-2">
+        <label class="cursor-pointer inline-flex items-center px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <i class="fa-solid fa-file-import mr-2 text-brand-400"></i> นำเข้าไฟล์ CSV
+          <input type="file" id="fileCsvInput" accept=".csv,text/csv" class="hidden">
+        </label>
+
+        <button id="btnExportCsv" type="button" class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white shadow-md shadow-emerald-700/20 transition">
+          <i class="fa-solid fa-file-export mr-2"></i> ส่งออกเป็นไฟล์ CSV (เปิดใน Excel ได้ทันที)
+        </button>
+
+        <span id="importStatusMsg" class="text-xs font-medium text-slate-300"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-slate-950 border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+    <p>© ระบบบันทึกและสรุปผลข้อมูลการสนับสนุน สส.อ๋อง | ออนไลน์คลาวด์มัลติยูสเซอร์</p>
+  </footer>
+
+  <!-- Custom Modal: QR Code Sharing -->
+  <div id="qrModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-center">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-qrcode text-brand-400"></i> สแกนเพื่อเข้าใช้งาน
+        </h3>
+        <button id="btnCloseQr" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-400">เปิดกล้องมือถือหรือ LINE สแกนเพื่อเปิดหน้าบันทึกข้อมูลได้ทันที</p>
+      
+      <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mx-auto my-2">
+        <img id="qrImage" src="" alt="QR Code" class="w-48 h-48 mx-auto">
+      </div>
+
+      <div class="pt-2">
+        <button id="btnCopyShareModal" type="button" class="w-full py-2.5 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white shadow-lg transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-copy"></i> คัดลอกลิงก์ส่งใน LINE กลุ่ม
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Modal: Delete Confirmation -->
+  <div id="deleteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+      <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mx-auto text-xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div class="text-center space-y-1">
+        <h3 class="text-base font-bold text-white">ยืนยันการลบรายการ</h3>
+        <p class="text-xs text-slate-400">คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การลบนี้จะไม่สามารถย้อนกลับได้</p>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button id="btnCancelDelete" type="button" class="flex-1 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+          ยกเลิก
+        </button>
+        <button id="btnConfirmDelete" type="button" class="flex-1 py-2 text-xs font-semibold rounded-xl bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition">
+          ลบข้อมูล
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase JS SDK Modules -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Application Categories Definition
+    const CATEGORIES = [
+      'น้ำดื่ม', 'รถแห่', 'ก่อสร้าง', 'เงิน', 'งาน สส.', 
+      'งานประเพณี เลขาแบงค์และสจ.', 'ฌาปณกิจศพ', 'อุปกรณ์กีฬา', 
+      'ถ้วยรางวัล', 'เครื่องดื่ม', 'เสื้อ', 'ผ้ากันเปื้อน', 'โรงทาน', 'อื่นๆ'
+    ];
+
+    const ThaiMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+    // State Variables
+    let records = [];
+    let filteredRecords = [];
+    let firestoreCollection = null;
+    let pendingDeleteId = null;
+    let currentUser = null;
+
+    // Helper functions
+    const $ = id => document.getElementById(id);
+    const escapeHtml = str => String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const formatNum = num => Number(num || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+    const getMonthLabel = key => {
+      if(!key || !key.includes('-')) return key;
+      const [y, m] = key.split('-');
+      return (ThaiMonths[+m - 1] || m) + ' ' + (+y + 543);
+    };
+
+    // DOM Elements Init
+    $('formDate').value = new Date().toISOString().slice(0, 10);
+
+    // Build Category Checkboxes
+    $('categoryCheckboxes').innerHTML = CATEGORIES.map(cat => `
+      <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-slate-900 border border-slate-700 hover:border-brand-500 text-slate-200 cursor-pointer select-none transition">
+        <input type="checkbox" value="${escapeHtml(cat)}" class="cat-checkbox rounded bg-slate-800 border-slate-700 text-brand-500 focus:ring-brand-500 focus:ring-offset-slate-900">
+        <span>${escapeHtml(cat)}</span>
+      </label>
+    `).join('');
+
+    function showToast(message, type = 'success') {
+      const box = $('toastBox');
+      box.classList.remove('hidden', 'bg-emerald-950/80', 'text-emerald-300', 'border-emerald-500/30', 'bg-rose-950/80', 'text-rose-300', 'border-rose-500/30', 'bg-amber-950/80', 'text-amber-300', 'border-amber-500/30');
+      
+      if(type === 'success') {
+        box.classList.add('bg-emerald-950/80', 'text-emerald-300', 'border-emerald-500/30');
+      } else if(type === 'error') {
+        box.classList.add('bg-rose-950/80', 'text-rose-300', 'border-rose-500/30');
+      } else {
+        box.classList.add('bg-amber-950/80', 'text-amber-300', 'border-amber-500/30');
+      }
+
+      box.innerHTML = `<div class="flex items-center gap-2"><i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> <span>${escapeHtml(message)}</span></div>`;
+      
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        box.classList.add('hidden');
+      }, 4500);
+    }
+
+    // Modal Control
+    function openDeleteModal(id) {
+      pendingDeleteId = id;
+      $('deleteModal').classList.remove('hidden');
+    }
+    function closeDeleteModal() {
+      pendingDeleteId = null;
+      $('deleteModal').classList.add('hidden');
+    }
+
+    $('btnCancelDelete').onclick = closeDeleteModal;
+    $('btnConfirmDelete').onclick = async () => {
+      if(!pendingDeleteId) return;
+      const targetId = pendingDeleteId;
+      closeDeleteModal();
+
+      try {
+        if(firestoreCollection) {
+          await deleteDoc(doc(firestoreCollection, targetId));
+        } else {
+          records = records.filter(r => r.id !== targetId);
+          updateAllUI();
+        }
+        showToast('ลบรายการเรียบร้อยแล้ว', 'success');
+      } catch(err) {
+        console.error('Delete error:', err);
+        showToast('ไม่สามารถลบรายการได้ คุณอาจไม่มีสิทธิ์หรือการเชื่อมต่อขัดข้อง', 'error');
+      }
+    };
+
+    function aggregateCount(list, extractFn) {
+      const map = {};
+      list.forEach(item => {
+        const keys = extractFn(item);
+        (Array.isArray(keys) ? keys : [keys]).forEach(k => {
+          if(k) map[k] = (map[k] || 0) + 1;
+        });
+      });
+      return Object.entries(map).sort((a, b) => b[1] - a[1]);
+    }
+
+    function renderBars(containerId, entries, limit = 99) {
+      const container = $(containerId);
+      if(!entries || !entries.length) {
+        container.innerHTML = `<div class="text-xs text-slate-500 py-3 text-center">ยังไม่มีข้อมูลในส่วนนี้</div>`;
+        return;
+      }
+
+      const items = entries.slice(0, limit);
+      const maxVal = Math.max(...items.map(e => e[1])) || 1;
+
+      container.innerHTML = items.map(([name, count]) => {
+        const pct = Math.round((count / maxVal) * 100);
+        return `
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300 font-medium truncate max-w-[70%]" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
+              <span class="text-slate-400 font-semibold">${formatNum(count)} ครั้ง</span>
+            </div>
+            <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div class="bg-gradient-to-r from-brand-600 to-sky-400 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateFilterDropdowns() {
+      const currentD = $('filterDistrict').value;
+      const currentM = $('filterMonth').value;
+
+      const districts = [...new Set(records.map(r => r.dist).filter(Boolean))].sort();
+      const months = [...new Set(records.map(r => (r.date || '').slice(0, 7)).filter(Boolean))].sort();
+
+      $('filterDistrict').innerHTML = '<option value="">ทุกอำเภอ</option>' + districts.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+      $('filterMonth').innerHTML = '<option value="">ทุกเดือน</option>' + months.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(getMonthLabel(m))}</option>`).join('');
+
+      $('filterDistrict').value = currentD;
+      $('filterMonth').value = currentM;
+
+      // Populate Datalists for form inputs
+      const populateDatalist = (id, key) => {
+        $(id).innerHTML = [...new Set(records.map(r => r[key]).filter(Boolean))].sort().map(val => `<option value="${escapeHtml(val)}">`).join('');
+      };
+      populateDatalist('listRecorder', 'rec');
+      populateDatalist('listDistrict', 'dist');
+      populateDatalist('listSubdistrict', 'sub');
+      populateDatalist('listVillage', 'vil');
+    }
+
+    function renderVillageExplorer() {
+      const query = $('searchVillageQuery').value.trim().toLowerCase();
+      const groupMap = {};
+
+      filteredRecords.forEach(r => {
+        const key = `${r.dist || ''}|${r.sub || ''}|${r.vil || ''}`;
+        if(!groupMap[key]) {
+          groupMap[key] = { vil: r.vil || '-', sub: r.sub || '', dist: r.dist || '', count: 0, amount: 0, lastDate: '', cats: {} };
+        }
+        const item = groupMap[key];
+        item.count++;
+        item.amount += Number(r.amount || 0);
+        if((r.date || '') > item.lastDate) item.lastDate = r.date || '';
+        (r.cats || []).forEach(c => item.cats[c] = (item.cats[c] || 0) + 1);
+      });
+
+      let list = Object.values(groupMap);
+      if(query) {
+        list = list.filter(o => `${o.vil} ${o.sub} ${o.dist}`.toLowerCase().includes(query));
+      }
+      list.sort((a, b) => b.count - a.count);
+
+      $('villageSearchMeta').textContent = list.length 
+        ? `พบ ${formatNum(list.length)} หมู่บ้าน ${list.length > 50 ? '(แสดง 50 อันดับแรก พิมพ์คำค้นเพื่อกรองเพิ่ม)' : ''}`
+        : 'ไม่พบข้อมูลหมู่บ้านตามเงื่อนไขค้นหา';
+
+      $('tableVillageBody').innerHTML = list.slice(0, 50).map(o => `
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="p-3 font-semibold text-white">${escapeHtml(o.vil)}</td>
+          <td class="p-3 text-slate-400">${escapeHtml(o.sub)}<br><span class="text-[10px] text-slate-500">${escapeHtml(o.dist)}</span></td>
+          <td class="p-3 text-center font-bold text-brand-400">${formatNum(o.count)}</td>
+          <td class="p-3 text-slate-400">${escapeHtml(o.lastDate)}</td>
+          <td class="p-3">
+            <div class="flex flex-wrap gap-1">
+              ${Object.entries(o.cats).sort((a,b)=>b[1]-a[1]).map(([c, n]) => `<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 border border-slate-700 text-slate-300">${escapeHtml(c)} <b class="text-brand-400">${n}</b></span>`).join('') || '-'}
+            </div>
+          </td>
+          <td class="p-3 text-right font-medium text-emerald-400">${o.amount ? formatNum(o.amount) : '-'}</td>
+        </tr>
+      `).join('') || `<tr><td colspan="6" class="p-4 text-center text-slate-500">ไม่พบข้อมูล</td></tr>`;
+    }
+
+    $('searchVillageQuery').addEventListener('input', renderVillageExplorer);
+
+    function updateAllUI() {
+      const selectedDistrict = $('filterDistrict').value;
+      const selectedMonth = $('filterMonth').value;
+
+      filteredRecords = records.filter(r => 
+        (!selectedDistrict || r.dist === selectedDistrict) &&
+        (!selectedMonth || (r.date || '').startsWith(selectedMonth))
+      );
+
+      // Render KPIs
+      $('kpiTotalCount').textContent = formatNum(filteredRecords.length);
+      $('kpiTotalAmount').textContent = formatNum(filteredRecords.reduce((sum, r) => sum + Number(r.amount || 0), 0));
+      $('kpiDistrictCount').textContent = new Set(filteredRecords.map(r => r.dist).filter(Boolean)).size;
+      $('kpiSubdistrictCount').textContent = new Set(filteredRecords.map(r => `${r.dist}|${r.sub}`).filter(x => x !== '|')).size;
+      $('kpiVillageCount').textContent = new Set(filteredRecords.map(r => `${r.dist}|${r.sub}|${r.vil}`).filter(x => x !== '||')).size;
+
+      // Render Bar Charts
+      renderBars('chartCategory', aggregateCount(filteredRecords, r => r.cats || []));
+      renderBars('chartDistrict', aggregateCount(filteredRecords, r => r.dist));
+      renderBars('chartSubdistrict', aggregateCount(filteredRecords, r => r.sub), 10);
+      renderBars('chartVillage', aggregateCount(filteredRecords, r => r.vil), 10);
+      renderBars('chartRecorder', aggregateCount(filteredRecords, r => r.rec), 10);
+      
+      const monthData = aggregateCount(filteredRecords, r => (r.date || '').slice(0, 7))
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([k, v]) => [getMonthLabel(k), v]);
+      renderBars('chartMonth', monthData);
+
+      // Render Village Explorer
+      renderVillageExplorer();
+
+      // Render Main Table
+      const sortedList = [...filteredRecords].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.ts || 0) - (a.ts || 0));
+      const displayLimit = 200;
+
+      $('recordCountMeta').textContent = `แสดง ${formatNum(Math.min(sortedList.length, displayLimit))} จาก ${formatNum(sortedList.length)} รายการ`;
+      $('moreRecordsMsg').textContent = sortedList.length > displayLimit ? `* แสดงผล 200 รายการล่าสุด (สถิติรวมด้านบนคำนวณครบทุกรายการแล้ว)` : '';
+
+      $('tableRecordsBody').innerHTML = sortedList.slice(0, displayLimit).map(r => `
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="p-3 font-medium text-slate-200 whitespace-nowrap">${escapeHtml(r.date)}</td>
+          <td class="p-3 text-slate-300">${escapeHtml(r.rec)}</td>
+          <td class="p-3 text-slate-300">${escapeHtml(r.dist)}<br><span class="text-[10px] text-slate-500">${escapeHtml(r.sub)}</span></td>
+          <td class="p-3 font-medium text-white">${escapeHtml(r.vil)}</td>
+          <td class="p-3">
+            <div class="flex flex-wrap gap-1">
+              ${(r.cats || []).map(c => `<span class="px-2 py-0.5 rounded-md text-[10px] bg-brand-950/80 border border-brand-500/30 text-brand-300">${escapeHtml(c)}</span>`).join('') || '-'}
+            </div>
+          </td>
+          <td class="p-3 text-right font-medium text-emerald-400 whitespace-nowrap">${r.amount ? formatNum(r.amount) : '-'}</td>
+          <td class="p-3 text-slate-400 max-w-xs truncate" title="${escapeHtml(r.note)}">${escapeHtml(r.note || '-')}</td>
+          <td class="p-3 text-center">
+            <button type="button" data-delete-id="${escapeHtml(r.id)}" class="btn-delete p-1.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('') || `<tr><td colspan="8" class="p-6 text-center text-slate-500">ยังไม่มีข้อมูลรายการสนับสนุน</td></tr>`;
+    }
+
+    // Attach Event Delegations
+    $('filterDistrict').onchange = $('filterMonth').onchange = updateAllUI;
+    
+    $('btnResetFilter').onclick = () => {
+      $('filterDistrict').value = '';
+      $('filterMonth').value = '';
+      updateAllUI();
+    };
+
+    $('tableRecordsBody').addEventListener('click', e => {
+      const btn = e.target.closest('[data-delete-id]');
+      if(btn) {
+        openDeleteModal(btn.dataset.deleteId);
+      }
+    });
+
+    $('recordForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const submitBtn = $('btnSubmit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> กำลังบันทึก...`;
+
+      const selectedCats = [...document.querySelectorAll('.cat-checkbox:checked')].map(cb => cb.value);
+
+      const recordData = {
+        date: $('formDate').value,
+        rec: $('formRecorder').value.trim(),
+        dist: $('formDistrict').value.trim(),
+        sub: $('formSubdistrict').value.trim(),
+        vil: $('formVillage').value.trim(),
+        cats: selectedCats,
+        amount: Number($('formAmount').value) || 0,
+        note: $('formNote').value.trim(),
+        ts: Date.now()
+      };
+
+      try {
+        if(firestoreCollection) {
+          await addDoc(firestoreCollection, recordData);
+        } else {
+          records.push({ id: 'local_' + Math.random().toString(36).substr(2, 9), ...recordData });
+          updateFilterDropdowns();
+          updateAllUI();
+        }
+
+        // Reset inputs except Date, Recorder, District, Subdistrict for fast repetitive entries
+        $('formVillage').value = '';
+        $('formAmount').value = '';
+        $('formNote').value = '';
+        document.querySelectorAll('.cat-checkbox').forEach(cb => cb.checked = false);
+
+        showToast('บันทึกข้อมูลเรียบร้อยแล้ว!', 'success');
+      } catch(err) {
+        console.error('Save error:', err);
+        showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล (' + (err.message || 'Error') + ')', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-2"></i> บันทึกข้อมูล`;
+      }
+    });
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], val = '', inQuotes = false;
+      text = text.replace(/^\uFEFF/, ''); // Remove BOM if present
+
+      for(let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if(inQuotes) {
+          if(c === '"') {
+            if(text[i + 1] === '"') { val += '"'; i++; }
+            else inQuotes = false;
+          } else { val += c; }
+        } else if(c === '"') { inQuotes = true; }
+        else if(c === ',') { row.push(val); val = ''; }
+        else if(c === '\n' || c === '\r') {
+          if(c === '\r' && text[i + 1] === '\n') i++;
+          row.push(val); val = '';
+          if(row.some(x => x.trim())) rows.push(row);
+          row = [];
+        } else { val += c; }
+      }
+      row.push(val);
+      if(row.some(x => x.trim())) rows.push(row);
+      return rows;
+    }
+
+    function normalizeDate(str) {
+      str = (str || '').trim();
+      let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if(m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+      m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+      if(m) {
+        let y = +m[3];
+        if(y > 2400) y -= 543; // Convert Buddhist year
+        return `${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+      }
+      return str;
+    }
+
+    $('fileCsvInput').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if(!file) return;
+
+      const text = await file.text();
+      const rows = parseCSV(text);
+      if(rows.length < 2) {
+        showToast('ไม่พบข้อมูลแถวในไฟล์ CSV', 'error');
+        return;
+      }
+
+      const headers = rows[0].map(x => x.trim());
+      const getIndex = k => headers.findIndex(x => x === k);
+
+      const colIndexes = {
+        date: getIndex('วันที่'),
+        rec: getIndex('ทีมงาน/ผู้บันทึก'),
+        dist: getIndex('อำเภอ'),
+        sub: getIndex('ตำบล'),
+        vil: getIndex('หมู่บ้าน'),
+        amount: getIndex('จำนวนเงิน (บาท)'),
+        note: getIndex('รายละเอียด'),
+        catSingle: getIndex('รายการสนับสนุน')
+      };
+
+      let countSuccess = 0, countFail = 0;
+      $('importStatusMsg').textContent = 'กำลังนำเข้าข้อมูล...';
+
+      for(const r of rows.slice(1)) {
+        const getVal = idx => idx >= 0 ? (r[idx] || '').trim() : '';
+        const itemCats = CATEGORIES.filter(c => {
+          const idx = getIndex(c);
+          return (idx >= 0 && getVal(idx)) || (colIndexes.catSingle >= 0 && getVal(colIndexes.catSingle).split(',').map(x=>x.trim()).includes(c));
+        });
+
+        const record = {
+          date: normalizeDate(getVal(colIndexes.date)),
+          rec: getVal(colIndexes.rec),
+          dist: getVal(colIndexes.dist),
+          sub: getVal(colIndexes.sub),
+          vil: getVal(colIndexes.vil),
+          cats: itemCats,
+          amount: Number(getVal(colIndexes.amount).replace(/,/g, '')) || 0,
+          note: getVal(colIndexes.note),
+          ts: Date.now()
+        };
+
+        if(!record.dist && !record.vil) { countFail++; continue; }
+
+        try {
+          if(firestoreCollection) {
+            await addDoc(firestoreCollection, record);
+          } else {
+            records.push({ id: 'local_' + Math.random().toString(36).substr(2, 9), ...record });
+          }
+          countSuccess++;
+        } catch(err) {
+          countFail++;
+        }
+      }
+
+      if(!firestoreCollection) {
+        updateFilterDropdowns();
+        updateAllUI();
+      }
+
+      $('importStatusMsg').textContent = `นำเข้าสำเร็จ ${countSuccess} รายการ ${countFail ? `(ข้าม/ล้มเหลว ${countFail})` : ''}`;
+      showToast(`นำเข้าสำเร็จ ${countSuccess} รายการ`, 'success');
+      e.target.value = '';
+    });
+
+    // CSV Export
+    $('btnExportCsv').onclick = () => {
+      const quote = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const header = ['วันที่', 'ทีมงาน/ผู้บันทึก', 'อำเภอ', 'ตำบล', 'หมู่บ้าน', ...CATEGORIES, 'จำนวนเงิน (บาท)', 'รายละเอียด'];
+      
+      const csvRows = [...records].sort((a,b) => (a.date || '').localeCompare(b.date || '')).map(r => [
+        r.date, r.rec, r.dist, r.sub, r.vil,
+        ...CATEGORIES.map(c => (r.cats || []).includes(c) ? 'ใช่' : ''),
+        r.amount || '',
+        r.note
+      ].map(quote).join(','));
+
+      const csvContent = '\uFEFF' + [header.map(quote).join(','), ...csvRows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `ong-support-data-${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('ดาวน์โหลดไฟล์ CSV เรียบร้อยแล้ว', 'success');
+    };
+
+    // Share URL button
+    $('btnShare').onclick = () => {
+      const shareUrl = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast('คัดลอกลิงก์เรียบร้อยแล้ว สามารถส่งต่อให้ผู้อื่นเข้ามากรอกได้เลย!', 'success');
+        }).catch(() => {
+          fallbackCopyText(shareUrl);
+        });
+      } else {
+        fallbackCopyText(shareUrl);
+      }
+    };
+
+    function fallbackCopyText(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('คัดลอกลิงก์เรียบร้อยแล้ว!', 'success');
+      } catch (err) {
+        showToast('กรุณาคัดลอก URL จากช่อง address bar เพื่อส่งต่อ', 'warning');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    $('btnReload').onclick = () => location.reload();
+
+    async function initFirebase() {
+      const badge = $('statusBadge');
+      
+      try {
+        // App ID from global runtime or fallback
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ong-support-app';
+        
+        let firebaseConfig;
+        if (typeof __firebase_config !== 'undefined') {
+          try {
+            firebaseConfig = JSON.parse(__firebase_config);
+          } catch(e) {
+            console.error('Invalid firebase config JSON', e);
+          }
+        }
+
+        // Fallback default demo config if not supplied
+        if(!firebaseConfig) {
+          firebaseConfig = {
+            apiKey: "AIzaSyDemoKeyOngSupportApp2026",
+            authDomain: "ong-support.firebaseapp.com",
+            projectId: "ong-support",
+            storageBucket: "ong-support.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+          };
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Authenticate (RULE 3)
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          const res = await signInWithCustomToken(auth, __initial_auth_token);
+          currentUser = res.user;
+        } else {
+          const res = await signInAnonymously(auth);
+          currentUser = res.user;
+        }
+
+        // Set Public Shared Data collection path (RULE 1)
+        firestoreCollection = collection(db, 'artifacts', appId, 'public', 'data', 'records');
+
+        // Real-time listener
+        onSnapshot(firestoreCollection, (snapshot) => {
+          records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> ออนไลน์ (เรียลไทม์)`;
+          
+          updateFilterDropdowns();
+          updateAllUI();
+        }, (err) => {
+          console.warn('Firestore snapshot listener warning:', err);
+          badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30";
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5"></span> ทำงานในเครื่อง (Local Mode)`;
+        });
+
+      } catch (err) {
+        console.warn("Firebase initialization skipped or restricted:", err);
+        badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30";
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5"></span> ทำงานในเครื่อง (Local Mode)`;
+        
+        updateFilterDropdowns();
+        updateAllUI();
+      }
+    }
+
+    // Launch App on DOM ready
+    window.addEventListener('DOMContentLoaded', initFirebase);
+  </script>
+</body>
+</html>
+    // Share URL & QR Code logic
+    function openQrModal() {
+      const currentUrl = window.location.href;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
+      $('qrImage').src = qrApiUrl;
+      $('qrModal').classList.remove('hidden');
+    }
+
+    $('btnQrCode').onclick = openQrModal;
+    $('btnCloseQr').onclick = () => $('qrModal').classList.add('hidden');
+    $('btnCopyShareModal').onclick = () => $('btnShare').click();
+
+    // Printable Summary Report
+    $('btnPrint').onclick = () => {
+      window.print();
+    };
+
+    // Share URL button
+    $('btnShare').onclick = () => {
+      const shareUrl = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast('คัดลอกลิงก์เรียบร้อยแล้ว สามารถส่งต่อใน LINE ให้ทีมงานเข้ามากรอกได้เลย!', 'success');
+        }).catch(() => {
+          fallbackCopyText(shareUrl);
+        });
+      } else {
+        fallbackCopyText(shareUrl);
+      }
+    };
+
+    function fallbackCopyText(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('คัดลอกลิงก์เรียบร้อยแล้ว!', 'success');
+      } catch (err) {
+        showToast('กรุณาคัดลอก URL จากช่อง address bar เพื่อส่งต่อ', 'warning');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    $('btnReload').onclick = () => location.reload();
+
+    async function initFirebase() {
+      const badge = $('statusBadge');
+      
+      try {
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ong-support-app';
+        
+        let firebaseConfig;
+        if (typeof __firebase_config !== 'undefined') {
+          try {
+            firebaseConfig = JSON.parse(__firebase_config);
+          } catch(e) {
+            console.error('Invalid firebase config JSON', e);
+          }
+        }
+
+        if(!firebaseConfig) {
+          firebaseConfig = {
+            apiKey: "AIzaSyDemoKeyOngSupportApp2026",
+            authDomain: "ong-support.firebaseapp.com",
+            projectId: "ong-support",
+            storageBucket: "ong-support.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+          };
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Authenticate (RULE 3)
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          const res = await signInWithCustomToken(auth, __initial_auth_token);
+          currentUser = res.user;
+        } else {
+          const res = await signInAnonymously(auth);
+          currentUser = res.user;
+        }
+
+        // Public Shared Data collection path (RULE 1)
+        firestoreCollection = collection(db, 'artifacts', appId, 'public', 'data', 'records');
+
+        // Real-time listener
+        onSnapshot(firestoreCollection, (snapshot) => {
+          records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> ออนไลน์ (เรียลไทม์)`;
+          
+          updateFilterDropdowns();
+          updateAllUI();
+        }, (err) => {
+          console.warn('Firestore snapshot listener warning:', err);
+          badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30";
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5"></span> ทำงานในเครื่อง (Local Mode)`;
+        });
+
+      } catch (err) {
+        console.warn("Firebase initialization skipped or restricted:", err);
+        badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30";
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5"></span> ทำงานในเครื่อง (Local Mode)`;
+        
+        updateFilterDropdowns();
+        updateAllUI();
+      }
+    }
+
+    // Launch App on DOM ready
+    window.addEventListener('DOMContentLoaded', initFirebase);
+  </script>
+</body>
+</html>
